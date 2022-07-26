@@ -16,7 +16,7 @@ df = pd.read_excel(file_name, sheet_name='Ticker')
 data = pd.DataFrame(df)
 
 # List of all tickers from .xlsx file
-tickers = [];
+tickers = []
 for tick in data.values:
     tickers.append(tick[0])
 
