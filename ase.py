@@ -15,7 +15,7 @@ ticker = "AALU"
 import pandas as pd
 
 # File name of xlsx file containing tickers
-file_name = 'sample output.xlsx' 
+file_name = 'sample_output.xlsx' 
 df = pd.read_excel(file_name, sheet_name='Ticker')
 data = pd.DataFrame(df)
 
