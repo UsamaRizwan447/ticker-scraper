@@ -8,6 +8,18 @@ driver = webdriver.Chrome()
 # TODO: replace this ticker with a for loop iterator
 ticker = "AALU"
 
+import pandas as pd
+
+# File name of xlsx file containing tickers
+file_name = 'sample output.xlsx' 
+df = pd.read_excel(file_name, sheet_name='Ticker')
+data = pd.DataFrame(df)
+
+# List of all tickers from .xlsx file
+tickers = [];
+for tick in data.values:
+    tickers.append(tick[0])
+
 
 # The main url for the company history page which will be used
 main_url = f"https://www.ase.com.jo/en/company_historical/{ticker}"
