@@ -1,5 +1,6 @@
 import pandas as pd
 
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -56,10 +57,12 @@ for ticker in tickers:
     reports_row_xpath = '//a[@ng-click="GetTaxonomyData(row)"]'
     rendering_platform_body_xpath = "//div[@class='main-header']"
 
-    def page_load_by_element(element_xpath, timeout=30):
-        element_present = EC.presence_of_element_located((By.XPATH, element_xpath))
-        WebDriverWait(driver, timeout).until(element_present)
-        return True
+    # The following block of variables is to store data about a ticker for its iteration
+    statement_of_financial_position = []
+    income_statement = []
+    statement_of_cash_flows_indirect_method = []
+    notes_subclassifications_of_assets = []
+    notes_subclassifications_of_liabilities_and_equities = []
 
     WebDriverWait(driver, 5)
     driver.find_element(By.XPATH, rendering_platform_body_xpath)
@@ -69,7 +72,22 @@ for ticker in tickers:
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
-                """Scrap data here"""
+
+                page_content = driver.page_source
+                soup = BeautifulSoup(page_content, 'html.parser')
+                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
+                    first_column = element.find('a')
+                    other_columns = element.find_all('label')
+                    strings = []
+                    strings.append(first_column.string.strip())
+                    for element in other_columns:
+                        strings.append(element.string.strip())
+                    if len(strings) < 3:
+                        while len(strings) != 3:
+                            strings.append("")
+                    statement_of_financial_position.append(strings)
+                if len(statement_of_financial_position) > 0:
+                    del statement_of_financial_position[0]
             except:
                 driver.quit()
             break
