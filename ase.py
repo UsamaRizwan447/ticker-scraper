@@ -15,11 +15,16 @@ file_name = 'sample_output.xlsx'
 df = pd.read_excel(file_name, sheet_name='Ticker')
 data = pd.DataFrame(df)
 
+# Maybe commented when local development
 # List of all tickers from .xlsx file
 tickers = []
 for tick in data.values:
     tickers.append(tick[0])
 
+# Maybe uncomment for local debugging
+# tickers = ["AALU"]
+
+# This loop iterates through the loaded tickers and performs scraping of the needed data
 for ticker in tickers:
     # The main url for the company history page which will be used
     main_url = f"https://www.ase.com.jo/en/company_historical/{ticker}"
@@ -61,10 +66,12 @@ for ticker in tickers:
     elements = driver.find_elements(By.XPATH, reports_row_xpath)
     for element in elements:
         if report_types[0].strip() == element.text.strip():
-            """Scrap data here"""
-            actions = ActionChains(driver).move_to_element(element)
-            actions.click(element).perform()
-            
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                element.click()
+                """Scrap data here"""
+            except:
+                driver.quit()
             break
 
     driver.get(reports_url)
@@ -73,9 +80,12 @@ for ticker in tickers:
     elements = driver.find_elements(By.XPATH, reports_row_xpath)
     for element in elements:
         if report_types[1].strip() == element.text.strip():
-            """Scrap data here"""
-            actions = ActionChains(driver).move_to_element(element)
-            actions.click(element).perform()
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                element.click()
+                """Scrap data here"""
+            except:
+                driver.quit()
             break
 
     driver.get(reports_url)
@@ -84,9 +94,12 @@ for ticker in tickers:
     elements = driver.find_elements(By.XPATH, reports_row_xpath)
     for element in elements:
         if report_types[2].strip() == element.text.strip():
-            """Scrap data here"""
-            actions = ActionChains(driver).move_to_element(element)
-            actions.click(element).perform()
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                element.click()
+                """Scrap data here"""
+            except:
+                driver.quit()
             break
 
     driver.get(reports_url)
@@ -95,9 +108,12 @@ for ticker in tickers:
     elements = driver.find_elements(By.XPATH, reports_row_xpath)
     for element in elements:
         if report_types[3].strip() == element.text.strip():
-            """Scrap data here"""
-            actions = ActionChains(driver).move_to_element(element)
-            actions.click(element).perform()
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                element.click()
+                """Scrap data here"""
+            except:
+                driver.quit()
             break
 
     driver.get(reports_url)
@@ -106,11 +122,12 @@ for ticker in tickers:
     elements = driver.find_elements(By.XPATH, reports_row_xpath)
     for element in elements:
         if report_types[4].strip() == element.text.strip():
-            """Scrap data here"""
-            actions = ActionChains(driver).move_to_element(element)
-            actions.click(element).perform()
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                element.click()
+                """Scrap data here"""
+            except:
+                driver.quit()
             break
-
-    # This gets us all of the reports and we iterate through them and open the ones we need
 
 driver.close()
