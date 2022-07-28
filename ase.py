@@ -26,6 +26,29 @@ for tick in data.values:
 # Maybe uncomment for local debugging
 # tickers = ["AALU"]
 
+# This is the common parser for most of the tables
+def table_parser(contents):
+    list_of_lists = []
+
+    soup = BeautifulSoup(contents, 'html.parser')
+    for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
+        first_column = element.find('a')
+        other_columns = element.find_all('label')
+        strings = []
+        if first_column is not None:
+            strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
+            for element in other_columns:
+                strings.append(element.string.strip())
+            if len(strings) < 3:
+                while len(strings) != 3:
+                    strings.append("")
+            list_of_lists.append(strings)
+    if len(list_of_lists) > 0:
+        del list_of_lists[0]
+    
+    return list_of_lists
+
+
 # This loop iterates through the loaded tickers and performs scraping of the needed data
 for ticker in tickers:
     # The main url for the company history page which will be used
@@ -74,22 +97,7 @@ for ticker in tickers:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
 
-                page_content = driver.page_source
-                soup = BeautifulSoup(page_content, 'html.parser')
-                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
-                    first_column = element.find('a')
-                    other_columns = element.find_all('label')
-                    strings = []
-                    if first_column is not None:
-                        strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
-                        for element in other_columns:
-                            strings.append(element.string.strip())
-                        if len(strings) < 3:
-                            while len(strings) != 3:
-                                strings.append("")
-                        statement_of_financial_position.append(strings)
-                if len(statement_of_financial_position) > 0:
-                    del statement_of_financial_position[0]
+                statement_of_financial_position = table_parser(driver.page_source)
             except:
                 driver.quit()
             break
@@ -104,22 +112,7 @@ for ticker in tickers:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
 
-                page_content = driver.page_source
-                soup = BeautifulSoup(page_content, 'html.parser')
-                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
-                    first_column = element.find('a')
-                    other_columns = element.find_all('label')
-                    strings = []
-                    if first_column is not None:
-                        strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
-                        for element in other_columns:
-                            strings.append(element.string.strip())
-                        if len(strings) < 3:
-                            while len(strings) != 3:
-                                strings.append("")
-                        income_statement.append(strings)
-                if len(income_statement) > 0:
-                    del income_statement[0]
+                income_statement = table_parser(driver.page_source)
             except:
                 driver.quit()
             break
@@ -134,22 +127,7 @@ for ticker in tickers:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
 
-                page_content = driver.page_source
-                soup = BeautifulSoup(page_content, 'html.parser')
-                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
-                    first_column = element.find('a')
-                    other_columns = element.find_all('label')
-                    strings = []
-                    if first_column is not None:
-                        strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
-                        for element in other_columns:
-                            strings.append(element.string.strip())
-                        if len(strings) < 3:
-                            while len(strings) != 3:
-                                strings.append("")
-                        statement_of_cash_flows_indirect_method.append(strings)
-                if len(statement_of_cash_flows_indirect_method) > 0:
-                    del statement_of_cash_flows_indirect_method[0]
+                statement_of_cash_flows_indirect_method = table_parser(driver.page_source)
             except:
                 driver.quit()
             break
@@ -199,24 +177,11 @@ for ticker in tickers:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
 
-                page_content = driver.page_source
-                soup = BeautifulSoup(page_content, 'html.parser')
-                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
-                    first_column = element.find('a')
-                    other_columns = element.find_all('label')
-                    strings = []
-                    if first_column is not None:
-                        strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
-                        for element in other_columns:
-                            strings.append(element.string.strip())
-                        if len(strings) < 3:
-                            while len(strings) != 3:
-                                strings.append("")
-                        notes_subclassifications_of_liabilities_and_equities.append(strings)
-                if len(notes_subclassifications_of_liabilities_and_equities) > 0:
-                    del notes_subclassifications_of_liabilities_and_equities[0]
+                notes_subclassifications_of_liabilities_and_equities = table_parser(driver.page_source)
             except:
                 driver.quit()
             break
 
+    tabel_values = statement_of_financial_position + income_statement + statement_of_cash_flows_indirect_method \
+                    + notes_subclassifications_of_assets + notes_subclassifications_of_liabilities_and_equities
 driver.close()
