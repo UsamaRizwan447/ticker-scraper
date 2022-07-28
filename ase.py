@@ -44,11 +44,16 @@ def table_parser(contents):
 
 with xlsxwriter.Workbook(file_name) as workbook:
     output_file = workbook.add_worksheet("Data")
-    tickers_sheet = workbook.add_worksheet("Ticker")
-    tickers_sheet.write(0, 0, "aseticker")
     output_file.write("A1", "asetickers")
     output_file.write("B1", "years")
 
+    # Saving tickers before scraping so they might not get lost in case of miss flow in code.
+    tickers_sheet = workbook.add_worksheet("Ticker")
+    tickers_sheet.write(0, 0, "aseticker")
+    for ticker_num in range(len(tickers)):
+        tickers_sheet.write(ticker_num+1,0, tickers[ticker_num])
+
+    # Some variables to help build a generic logic for data writing in file.
     title_row = 0
     header_slack_for_rows = 1
     slack_for_cols = 2
@@ -220,6 +225,5 @@ with xlsxwriter.Workbook(file_name) as workbook:
             column_number += slack_for_cols
             output_file.write_column(title_row, column_number, [data[0]])
             output_file.write_column(base_row, column_number, [data[1], data[2]])
-        tickers_sheet.write(tickerNumber+header_slack_for_rows,0, ticker)
 
 driver.close()
