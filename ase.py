@@ -1,5 +1,7 @@
 import re
+from numpy import true_divide
 import pandas as pd
+import xlsxwriter
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -48,152 +50,172 @@ def table_parser(contents):
     
     return list_of_lists
 
-import pandas as pd
+with xlsxwriter.Workbook(file_name) as workbook:
+    output_file = workbook.add_worksheet("Sample Output")
+    tickers_sheet = workbook.add_worksheet("Ticker")
+    tickers_sheet.write(0, 0, "aseticker")
+    output_file.write("A1", "asetickers")
+    output_file.write("B1", "years")
 
-# File name of xlsx file containing tickers
-file_name = 'sample_output.xlsx' 
-df = pd.read_excel(file_name, sheet_name='Ticker')
-data = pd.DataFrame(df)
+    title_row = 0
+    header_slack_for_rows = 1
+    slack_for_cols = 2
+    column_number = 0
+    # Maintains all the titles in list, helps to decide whether current value goes as new colum or in an existing column 
+    titles = []
+    # This loop iterates through the loaded tickers and performs scraping of the needed data
+    for tickerNumber, ticker in enumerate(tickers):
+        #base row number for current ticker in sheet
+        base_row = tickerNumber * slack_for_cols + header_slack_for_rows
 
-# List of all tickers from .xlsx file
-tickers = [];
-for tick in data.values:
-    tickers.append(tick[0])
+        # To make 2 rows for each tickers in order to store records of 2021 and 2022
+        output_file.write_column(base_row, 0, [ticker, ticker])
+        output_file.write_column(base_row, 1, ["2021", "2022"])
 
+        # The main url for the company history page which will be used
+        main_url = f"https://www.ase.com.jo/en/company_historical/{ticker}"
 
-# This loop iterates through the loaded tickers and performs scraping of the needed data
-for ticker in tickers:
-    # The main url for the company history page which will be used
-    main_url = f"https://www.ase.com.jo/en/company_historical/{ticker}"
+        driver.get(main_url)
 
-    driver.get(main_url)
+        # Find the Disclosure tab from navbar and click
+        element = driver.find_elements(By.XPATH, "//ul[@class='tabs--primary nav nav-tabs']//a")[2]
+        element.click()
 
-    # Find the Disclosure tab from navbar and click
-    element = driver.find_elements(By.XPATH, "//ul[@class='tabs--primary nav nav-tabs']//a")[2]
-    element.click()
+        # Find the "Annual Financial Report" and open it
+        elements = driver.find_elements(By.XPATH, "//tr[td/@headers='view-name-table-column' and td/@headers='view-filename-html-table-column']")
+        for element in elements:
+            if "Annual Financial Report" in element.text:
+                element.find_element(By.XPATH, "//td[@headers='view-filename-html-table-column']").click()
+                break
 
-    # Find the "Annual Financial Report" and open it
-    elements = driver.find_elements(By.XPATH, "//tr[td/@headers='view-name-table-column' and td/@headers='view-filename-html-table-column']")
-    for element in elements:
-        if "Annual Financial Report" in element.text:
-            element.find_element(By.XPATH, "//td[@headers='view-filename-html-table-column']").click()
-            break
+        # Reports page URL
+        reports_url = driver.current_url
 
-    # Reports page URL
-    reports_url = driver.current_url
+        # Report that we need the data from
+        report_types = [ "Statement of financial position",
+                        "Income statement",
+                        "Statement of cash flows, indirect method",
+                        "Notes - Subclassifications of assets",
+                        "Notes - Subclassifications of liabilities and equities"
+                        ]
 
-    # Report that we need the data from
-    report_types = [ "Statement of financial position",
-                    "Income statement",
-                    "Statement of cash flows, indirect method",
-                    "Notes - Subclassifications of assets",
-                    "Notes - Subclassifications of liabilities and equities"
-                    ]
+        reports_row_xpath = '//a[@ng-click="GetTaxonomyData(row)"]'
+        rendering_platform_body_xpath = "//div[@class='main-header']"
 
-    reports_row_xpath = '//a[@ng-click="GetTaxonomyData(row)"]'
-    rendering_platform_body_xpath = "//div[@class='main-header']"
+        # The following block of variables is to store data about a ticker for its iteration
+        statement_of_financial_position = []
+        income_statement = []
+        statement_of_cash_flows_indirect_method = []
+        notes_subclassifications_of_assets = []
+        notes_subclassifications_of_liabilities_and_equities = []
 
-    # The following block of variables is to store data about a ticker for its iteration
-    statement_of_financial_position = []
-    income_statement = []
-    statement_of_cash_flows_indirect_method = []
-    notes_subclassifications_of_assets = []
-    notes_subclassifications_of_liabilities_and_equities = []
+        WebDriverWait(driver, 5)
+        driver.find_element(By.XPATH, rendering_platform_body_xpath)
+        elements = driver.find_elements(By.XPATH, reports_row_xpath)
+        for element in elements:
+            if report_types[0].strip() == element.text.strip():
+                try:
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                    element.click()
 
-    WebDriverWait(driver, 5)
-    driver.find_element(By.XPATH, rendering_platform_body_xpath)
-    elements = driver.find_elements(By.XPATH, reports_row_xpath)
-    for element in elements:
-        if report_types[0].strip() == element.text.strip():
+                    statement_of_financial_position = table_parser(driver.page_source)
+                except:
+                    driver.quit()
+                break
+
+        driver.get(reports_url)
+        WebDriverWait(driver, 5)
+        driver.find_element(By.XPATH, rendering_platform_body_xpath)
+        elements = driver.find_elements(By.XPATH, reports_row_xpath)
+        for element in elements:
+            if report_types[1].strip() == element.text.strip():
+                try:
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                    element.click()
+
+                    income_statement = table_parser(driver.page_source)
+                except:
+                    driver.quit()
+                break
+
+        driver.get(reports_url)
+        WebDriverWait(driver, 5)
+        driver.find_element(By.XPATH, rendering_platform_body_xpath)
+        elements = driver.find_elements(By.XPATH, reports_row_xpath)
+        for element in elements:
+            if report_types[2].strip() == element.text.strip():
+                try:
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                    element.click()
+
+                    statement_of_cash_flows_indirect_method = table_parser(driver.page_source)
+                except:
+                    driver.quit()
+                break
+
+        driver.get(reports_url)
+        WebDriverWait(driver, 5)
+        driver.find_element(By.XPATH, rendering_platform_body_xpath)
+        elements = driver.find_elements(By.XPATH, reports_row_xpath)
+        for element in elements:
+            if report_types[3].strip() == element.text.strip():
+                try:
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                    element.click()
+
+                    table_rows = []
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    tables = soup.find_all('table', attrs={"ng-repeat": "tbl in MultiTableCellCombinationList"})
+                    for i in range(len(tables)):
+                        if i!=3 and i!=4 and i!=len(tables)-2:
+                            for element in tables[i].find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
+                                first_column = element.find('a')
+                                other_columns = element.find_all('label')
+                                strings = []
+                                if first_column is not None:
+                                    strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
+                                    for element in other_columns:
+                                        if element.string is not None:
+                                            strings.append(element.string.strip('\n').strip())
+                                        
+                                    if len(strings) < 3:
+                                        while len(strings) != 3:
+                                            strings.append("")
+                                    notes_subclassifications_of_assets.append(strings)
+                            if len(notes_subclassifications_of_assets) > 0:
+                                del notes_subclassifications_of_assets[0]
+
+                except:
+                    driver.quit()
+                break
+
+        driver.get(reports_url)
+        WebDriverWait(driver, 5)
+        driver.find_element(By.XPATH, rendering_platform_body_xpath)
+        elements = driver.find_elements(By.XPATH, reports_row_xpath)
+        for element in elements:
+            if report_types[4].strip() == element.text.strip():
+                try:
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
+                    element.click()
+
+                    notes_subclassifications_of_liabilities_and_equities = table_parser(driver.page_source)
+                except:
+                    driver.quit()
+                break
+
+        table_values = statement_of_financial_position + income_statement + statement_of_cash_flows_indirect_method \
+                        + notes_subclassifications_of_assets + notes_subclassifications_of_liabilities_and_equities
+
+        for data in table_values:
             try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
-                element.click()
-
-                statement_of_financial_position = table_parser(driver.page_source)
+                column_number = titles.index(data[0])
             except:
-                driver.quit()
-            break
+                column_number = len(titles)
+                titles.append(data[0])
+            column_number += slack_for_cols
+            output_file.write_column(title_row, column_number, [data[0]])
+            output_file.write_column(base_row, column_number, [data[1], data[2]])
+        tickers_sheet.write(tickerNumber+header_slack_for_rows,0, ticker)
 
-    driver.get(reports_url)
-    WebDriverWait(driver, 5)
-    driver.find_element(By.XPATH, rendering_platform_body_xpath)
-    elements = driver.find_elements(By.XPATH, reports_row_xpath)
-    for element in elements:
-        if report_types[1].strip() == element.text.strip():
-            try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
-                element.click()
-
-                income_statement = table_parser(driver.page_source)
-            except:
-                driver.quit()
-            break
-
-    driver.get(reports_url)
-    WebDriverWait(driver, 5)
-    driver.find_element(By.XPATH, rendering_platform_body_xpath)
-    elements = driver.find_elements(By.XPATH, reports_row_xpath)
-    for element in elements:
-        if report_types[2].strip() == element.text.strip():
-            try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
-                element.click()
-
-                statement_of_cash_flows_indirect_method = table_parser(driver.page_source)
-            except:
-                driver.quit()
-            break
-
-    driver.get(reports_url)
-    WebDriverWait(driver, 5)
-    driver.find_element(By.XPATH, rendering_platform_body_xpath)
-    elements = driver.find_elements(By.XPATH, reports_row_xpath)
-    for element in elements:
-        if report_types[3].strip() == element.text.strip():
-            try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
-                element.click()
-
-                table_rows = []
-                tables = soup.find_all('table', attrs={"ng-repeat": "tbl in MultiTableCellCombinationList"})
-                for i in range(len(tables)):
-                    if i!=3 and i!=4 and i!=len(tables)-2:
-                        for element in tables[i].find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
-                            first_column = element.find('a')
-                            other_columns = element.find_all('label')
-                            strings = []
-                            if first_column is not None:
-                                strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
-                                for element in other_columns:
-                                    if element.string is not None:
-                                        strings.append(element.string.strip('\n').strip())
-                                    
-                                if len(strings) < 3:
-                                    while len(strings) != 3:
-                                        strings.append("")
-                                notes_subclassifications_of_assets.append(strings)
-                        if len(notes_subclassifications_of_assets) > 0:
-                            del notes_subclassifications_of_assets[0]
-
-            except:
-                driver.quit()
-            break
-
-    driver.get(reports_url)
-    WebDriverWait(driver, 5)
-    driver.find_element(By.XPATH, rendering_platform_body_xpath)
-    elements = driver.find_elements(By.XPATH, reports_row_xpath)
-    for element in elements:
-        if report_types[4].strip() == element.text.strip():
-            try:
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
-                element.click()
-
-                notes_subclassifications_of_liabilities_and_equities = table_parser(driver.page_source)
-            except:
-                driver.quit()
-            break
-
-    tabel_values = statement_of_financial_position + income_statement + statement_of_cash_flows_indirect_method \
-                    + notes_subclassifications_of_assets + notes_subclassifications_of_liabilities_and_equities
 driver.close()
