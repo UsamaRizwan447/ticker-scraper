@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 
 from bs4 import BeautifulSoup
@@ -79,7 +80,7 @@ for ticker in tickers:
                     first_column = element.find('a')
                     other_columns = element.find_all('label')
                     strings = []
-                    strings.append(first_column.string.strip())
+                    strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip()))
                     for element in other_columns:
                         strings.append(element.string.strip())
                     if len(strings) < 3:
@@ -97,11 +98,29 @@ for ticker in tickers:
     driver.find_element(By.XPATH, rendering_platform_body_xpath)
     elements = driver.find_elements(By.XPATH, reports_row_xpath)
     for element in elements:
+        from pdb import set_trace; set_trace();
         if report_types[1].strip() == element.text.strip():
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
-                """Scrap data here"""
+
+                page_content = driver.page_source
+                soup = BeautifulSoup(page_content, 'html.parser')
+                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
+                    first_column = element.find('a')
+                    other_columns = element.find_all('label')
+                    strings = []
+                    strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip()))
+                    for element in other_columns:
+                        strings.append(element.string.strip())
+                    if len(strings) < 3:
+                        while len(strings) != 3:
+                            strings.append("")
+                    income_statement.append(strings)
+                if len(income_statement) > 0:
+                    del income_statement[0]
+
+                from pdb import set_trace; set_trace();
             except:
                 driver.quit()
             break
