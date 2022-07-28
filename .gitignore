@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# .DS_Store file related to finder of Mac OS
+.DS_Store
+
 # C extensions
 *.so
 
