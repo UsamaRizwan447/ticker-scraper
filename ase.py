@@ -1,12 +1,10 @@
 import re
-from numpy import true_divide
 import pandas as pd
+import time
 import xlsxwriter
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -15,18 +13,12 @@ from selenium.webdriver.support import expected_conditions as EC
 driver = webdriver.Chrome()
 
 # File name of xlsx file containing tickers
-file_name = 'sample_output.xlsx' 
+file_name = 'input_output.xlsx' 
 df = pd.read_excel(file_name, sheet_name='Ticker')
 data = pd.DataFrame(df)
 
-# Maybe commented when local development
 # List of all tickers from .xlsx file
-tickers = []
-for tick in data.values:
-    tickers.append(tick[0])
-
-# Maybe uncomment for local debugging
-# tickers = ["AALU"]
+tickers = [ticker[0] for ticker in data.values]
 
 # This is the common parser for most of the tables
 def table_parser(contents):
@@ -51,7 +43,7 @@ def table_parser(contents):
     return list_of_lists
 
 with xlsxwriter.Workbook(file_name) as workbook:
-    output_file = workbook.add_worksheet("Sample Output")
+    output_file = workbook.add_worksheet("Data")
     tickers_sheet = workbook.add_worksheet("Ticker")
     tickers_sheet.write(0, 0, "aseticker")
     output_file.write("A1", "asetickers")
@@ -61,11 +53,13 @@ with xlsxwriter.Workbook(file_name) as workbook:
     header_slack_for_rows = 1
     slack_for_cols = 2
     column_number = 0
+
     # Maintains all the titles in list, helps to decide whether current value goes as new colum or in an existing column 
     titles = []
+
     # This loop iterates through the loaded tickers and performs scraping of the needed data
     for tickerNumber, ticker in enumerate(tickers):
-        #base row number for current ticker in sheet
+        # Base row number for current ticker in sheet
         base_row = tickerNumber * slack_for_cols + header_slack_for_rows
 
         # To make 2 rows for each tickers in order to store records of 2021 and 2022
@@ -115,8 +109,10 @@ with xlsxwriter.Workbook(file_name) as workbook:
         for element in elements:
             if report_types[0].strip() == element.text.strip():
                 try:
+                    time.sleep(2)
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                     element.click()
+                    time.sleep(3)
 
                     statement_of_financial_position = table_parser(driver.page_source)
                 except:
@@ -130,8 +126,10 @@ with xlsxwriter.Workbook(file_name) as workbook:
         for element in elements:
             if report_types[1].strip() == element.text.strip():
                 try:
+                    time.sleep(2)
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                     element.click()
+                    time.sleep(3)
 
                     income_statement = table_parser(driver.page_source)
                 except:
@@ -145,8 +143,10 @@ with xlsxwriter.Workbook(file_name) as workbook:
         for element in elements:
             if report_types[2].strip() == element.text.strip():
                 try:
+                    time.sleep(2)
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                     element.click()
+                    time.sleep(3)
 
                     statement_of_cash_flows_indirect_method = table_parser(driver.page_source)
                 except:
@@ -160,8 +160,10 @@ with xlsxwriter.Workbook(file_name) as workbook:
         for element in elements:
             if report_types[3].strip() == element.text.strip():
                 try:
+                    time.sleep(2)
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                     element.click()
+                    time.sleep(3)
 
                     table_rows = []
                     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -196,8 +198,10 @@ with xlsxwriter.Workbook(file_name) as workbook:
         for element in elements:
             if report_types[4].strip() == element.text.strip():
                 try:
+                    time.sleep(2)
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                     element.click()
+                    time.sleep(3)
 
                     notes_subclassifications_of_liabilities_and_equities = table_parser(driver.page_source)
                 except:
