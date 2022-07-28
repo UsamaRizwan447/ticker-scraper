@@ -83,7 +83,7 @@ with xlsxwriter.Workbook(file_name) as workbook:
         # Find the "Annual Financial Report" and open it
         elements = driver.find_elements(By.XPATH, "//tr[td/@headers='view-name-table-column' and td/@headers='view-filename-html-table-column']")
         for element in elements:
-            if "Annual Financial Report" in element.text:
+            if "Annual Financial Report".lower() in element.text.lower() or "Unlisted Company Disclosures".lower() in element.text.lower():
                 element.find_element(By.XPATH, "//td[@headers='view-filename-html-table-column']").click()
                 break
 
@@ -108,8 +108,8 @@ with xlsxwriter.Workbook(file_name) as workbook:
         notes_subclassifications_of_assets = []
         notes_subclassifications_of_liabilities_and_equities = []
 
+        time.sleep(5)
         WebDriverWait(driver, 5)
-        driver.find_element(By.XPATH, rendering_platform_body_xpath)
         elements = driver.find_elements(By.XPATH, reports_row_xpath)
         for element in elements:
             if report_types[0].strip() == element.text.strip():
@@ -125,8 +125,8 @@ with xlsxwriter.Workbook(file_name) as workbook:
                 break
 
         driver.get(reports_url)
+        time.sleep(5)
         WebDriverWait(driver, 5)
-        driver.find_element(By.XPATH, rendering_platform_body_xpath)
         elements = driver.find_elements(By.XPATH, reports_row_xpath)
         for element in elements:
             if report_types[1].strip() == element.text.strip():
@@ -142,8 +142,8 @@ with xlsxwriter.Workbook(file_name) as workbook:
                 break
 
         driver.get(reports_url)
+        time.sleep(5)
         WebDriverWait(driver, 5)
-        driver.find_element(By.XPATH, rendering_platform_body_xpath)
         elements = driver.find_elements(By.XPATH, reports_row_xpath)
         for element in elements:
             if report_types[2].strip() == element.text.strip():
@@ -159,8 +159,8 @@ with xlsxwriter.Workbook(file_name) as workbook:
                 break
 
         driver.get(reports_url)
+        time.sleep(5)
         WebDriverWait(driver, 5)
-        driver.find_element(By.XPATH, rendering_platform_body_xpath)
         elements = driver.find_elements(By.XPATH, reports_row_xpath)
         for element in elements:
             if report_types[3].strip() == element.text.strip():
@@ -197,8 +197,8 @@ with xlsxwriter.Workbook(file_name) as workbook:
                 break
 
         driver.get(reports_url)
+        time.sleep(5)
         WebDriverWait(driver, 5)
-        driver.find_element(By.XPATH, rendering_platform_body_xpath)
         elements = driver.find_elements(By.XPATH, reports_row_xpath)
         for element in elements:
             if report_types[4].strip() == element.text.strip():
