@@ -163,7 +163,28 @@ for ticker in tickers:
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
-                """Scrap data here"""
+
+                table_rows = []
+                tables = soup.find_all('table', attrs={"ng-repeat": "tbl in MultiTableCellCombinationList"})
+                for i in range(len(tables)):
+                    if i!=3 and i!=4 and i!=len(tables)-2:
+                        for element in tables[i].find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
+                            first_column = element.find('a')
+                            other_columns = element.find_all('label')
+                            strings = []
+                            if first_column is not None:
+                                strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
+                                for element in other_columns:
+                                    if element.string is not None:
+                                        strings.append(element.string.strip('\n').strip())
+                                    
+                                if len(strings) < 3:
+                                    while len(strings) != 3:
+                                        strings.append("")
+                                notes_subclassifications_of_assets.append(strings)
+                        if len(notes_subclassifications_of_assets) > 0:
+                            del notes_subclassifications_of_assets[0]
+
             except:
                 driver.quit()
             break
@@ -177,7 +198,23 @@ for ticker in tickers:
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, rendering_platform_body_xpath)))
                 element.click()
-                """Scrap data here"""
+
+                page_content = driver.page_source
+                soup = BeautifulSoup(page_content, 'html.parser')
+                for element in soup.find_all('tr', attrs={"ng-repeat": "row in tbl.RowElementsList track by $index"}):
+                    first_column = element.find('a')
+                    other_columns = element.find_all('label')
+                    strings = []
+                    if first_column is not None:
+                        strings.append(re.sub(' +', ' ', first_column.string.replace('\n', '').strip().strip(':')))
+                        for element in other_columns:
+                            strings.append(element.string.strip())
+                        if len(strings) < 3:
+                            while len(strings) != 3:
+                                strings.append("")
+                        notes_subclassifications_of_liabilities_and_equities.append(strings)
+                if len(notes_subclassifications_of_liabilities_and_equities) > 0:
+                    del notes_subclassifications_of_liabilities_and_equities[0]
             except:
                 driver.quit()
             break
