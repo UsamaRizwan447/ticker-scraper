@@ -2,7 +2,7 @@
 
 # from bs4 import BeautifulSoup
 
-# with open('sample.html', 'r') as contents:
+# with open('sample_report_html/statement_of_financial_positions.html', 'r') as contents:
 #     soup = BeautifulSoup(contents, 'html.parser')
 
 # table_rows = []
