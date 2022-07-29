@@ -23,6 +23,8 @@ data = pd.DataFrame(df)
 # List of all tickers from .xlsx file
 tickers = [ticker[0] for ticker in data.values]
 
+tickers = ['ABUS']
+
 def get_reports_link(contents):
     soup = BeautifulSoup(contents, 'html.parser')
     table_rows = soup.find('tbody').find_all("tr")
