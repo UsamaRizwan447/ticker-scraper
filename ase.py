@@ -23,6 +23,22 @@ data = pd.DataFrame(df)
 # List of all tickers from .xlsx file
 tickers = [ticker[0] for ticker in data.values]
 
+tickers = ['ABUS']
+
+def get_reports_link(contents):
+    soup = BeautifulSoup(contents, 'html.parser')
+    table_rows = soup.find('tbody').find_all("tr")
+
+    reports_link = ''
+    for row in table_rows:
+        html_link = row.find("a")
+        if html_link is not None:
+            if 'xbrljordan' in html_link['href']:
+                reports_link = html_link['href']
+                break
+
+    return reports_link
+
 # This is the common parser for most of the tables
 def table_parser(contents):
     list_of_lists = []
@@ -84,11 +100,7 @@ with xlsxwriter.Workbook(file_name) as workbook:
         element.click()
 
         # Find the "Annual Financial Report" and open it
-        elements = driver.find_elements(By.XPATH, "//tr[td/@headers='view-name-table-column' and td/@headers='view-filename-html-table-column']")
-        for index, element in enumerate(elements):
-            if "Annual Financial Report" in element.text.strip() or "Unlisted Company Disclosures" in element.text.strip():
-                element.find_element(By.XPATH, "//td[@headers='view-filename-html-table-column']").click()
-                break
+        driver.get(get_reports_link(driver.page_source))
 
         # Reports page URL
         reports_url = driver.current_url
