@@ -1,4 +1,7 @@
+from bdb import set_trace
 import re
+from xml.dom.minidom import Document
+from attr import attr
 import pandas as pd
 import time
 import xlsxwriter
@@ -82,14 +85,14 @@ with xlsxwriter.Workbook(file_name) as workbook:
 
         # Find the "Annual Financial Report" and open it
         elements = driver.find_elements(By.XPATH, "//tr[td/@headers='view-name-table-column' and td/@headers='view-filename-html-table-column']")
-        for element in elements:
-            if "Annual Financial Report".lower() in element.text.lower() or "Unlisted Company Disclosures".lower() in element.text.lower():
+        for index, element in enumerate(elements):
+            if "Annual Financial Report" in element.text.strip() or "Unlisted Company Disclosures" in element.text.strip():
                 element.find_element(By.XPATH, "//td[@headers='view-filename-html-table-column']").click()
                 break
 
         # Reports page URL
         reports_url = driver.current_url
-
+        
         # Report that we need the data from
         report_types = [ "Statement of financial position",
                         "Income statement",
